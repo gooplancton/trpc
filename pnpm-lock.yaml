@@ -664,6 +664,49 @@ importers:
         specifier: ^1.0.1
         version: 1.0.4
 
+  examples/http2-minimal:
+    dependencies:
+      '@trpc/client':
+        specifier: npm:@trpc/client@next
+        version: link:../../packages/client
+      '@trpc/server':
+        specifier: npm:@trpc/server@next
+        version: link:../../packages/server
+      zod:
+        specifier: ^3.0.0
+        version: 3.22.4
+    devDependencies:
+      '@types/express':
+        specifier: ^4.17.17
+        version: 4.17.17
+      '@types/node':
+        specifier: ^20.10.0
+        version: 20.10.4
+      '@types/react':
+        specifier: ^18.2.33
+        version: 18.2.33
+      esbuild:
+        specifier: ^0.17.10
+        version: 0.17.10
+      eslint:
+        specifier: ^8.56.0
+        version: 8.56.0
+      npm-run-all:
+        specifier: ^4.1.5
+        version: 4.1.5
+      start-server-and-test:
+        specifier: ^1.12.0
+        version: 1.14.0
+      tsx:
+        specifier: ^4.0.0
+        version: 4.6.2
+      typescript:
+        specifier: ^5.3.3
+        version: 5.3.3
+      wait-port:
+        specifier: ^1.0.1
+        version: 1.0.4
+
   examples/lambda-api-gateway:
     dependencies:
       '@trpc/client':
