@@ -1,5 +1,4 @@
 import http2 from "node:http2"
-import fs from 'node:fs'
 
 const client = http2.connect('http://localhost:3000');
 client.on('error', (err) => console.error(err));
