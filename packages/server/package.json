@@ -68,6 +68,11 @@
       "require": "./dist/adapters/node-http/index.js",
       "default": "./dist/adapters/node-http/index.js"
     },
+    "./adapters/node-http2": {
+      "import": "./dist/adapters/node-http2/index.mjs",
+      "require": "./dist/adapters/node-http2/index.js",
+      "default": "./dist/adapters/node-http2/index.js"
+    },
     "./adapters/standalone": {
       "import": "./dist/adapters/standalone.mjs",
       "require": "./dist/adapters/standalone.js",

@@ -10,12 +10,12 @@
     "build": "esbuild src/server.ts src/client.ts --bundle --packages=external --platform=node --format=esm --outdir=dist --sourcemap",
     "lint": "eslint --cache --ext \".js,.ts,.tsx\" src",
     "start": "pnpm dev",
-    "test-dev": "start-server-and-test 'tsx src/server' 2021 'tsx src/client'",
-    "test-start": "start-server-and-test 'node dist/server' 2021 'node dist/client'"
+    "test-dev": "start-server-and-test 'tsx src/server' 3000 'tsx src/client'",
+    "test-start": "start-server-and-test 'node dist/server' 3000 'node dist/client'"
   },
   "dependencies": {
-    "@trpc/client": "npm:@trpc/client@next",
-    "@trpc/server": "npm:@trpc/server@next",
+    "@trpc/client": "*",
+    "@trpc/server": "*",
     "zod": "^3.0.0"
   },
   "devDependencies": {

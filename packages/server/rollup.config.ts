@@ -12,6 +12,7 @@ export const input = [
   'src/adapters/node-http/content-type/json/index.ts',
   'src/adapters/node-http/index.ts',
   'src/adapters/standalone.ts',
+  'src/adapters/node-http2/index.ts',
   'src/adapters/ws.ts',
   'src/http.ts',
   'src/index.ts',
