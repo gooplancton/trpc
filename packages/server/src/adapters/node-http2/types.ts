@@ -38,7 +38,3 @@ export type NodeHTTP2RequestHandlerOptions<
   res: http2.Http2ServerResponse;
   path: string;
 } & NodeHTTP2HandlerOptions<TRouter>;
-
-export type HTTP2Headers = {
-  [x: string]: string | string[] | undefined;
-}

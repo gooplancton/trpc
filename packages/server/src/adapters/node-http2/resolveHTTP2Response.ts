@@ -1,21 +1,33 @@
-import type { HTTP2Headers } from '.';
-import type { inferRouterContext } from '../../@trpc/server';
+import type {
+  inferRouterContext,
+  inferRouterError,
+  ProcedureType,
+} from '../../@trpc/server';
 import {
   callTRPCProcedure,
   getErrorShape,
   getTRPCErrorFromUnknown,
   transformTRPCResponse,
+  TRPCError,
   type AnyTRPCRouter,
-  type TRPCError,
 } from '../../@trpc/server';
-import type { TRPCRequestInfo } from '../../@trpc/server/http';
+import type {
+  HTTPHeaders,
+  HTTPResponse,
+  TRPCRequestInfo,
+} from '../../@trpc/server/http';
 import {
+  getHTTPStatusCode,
   getJsonContentTypeInputs,
   type BaseContentTypeHandler,
   type HTTPBaseHandlerOptions,
   type HTTPRequest,
   type ResolveHTTPRequestOptionsContextFn,
 } from '../../@trpc/server/http';
+import type {
+  TRPCResponse,
+  TRPCSuccessResponse,
+} from '../../@trpc/server/rpc';
 
 type Maybe<TType> = TType | null | undefined;
 
@@ -35,7 +47,7 @@ interface ResolveHTTP2RequestOptions<
    * NOTE: as opposed to HTTP/1.1, we get streaming and batching (concatenation)
    * out of the box for free with HTTP/2
    */
-  unstable_onEnd: (headers: HTTP2Headers, body: string) => any;
+  unstable_onEnd: (status: number, headers: HTTPHeaders, body: string) => any;
 }
 
 export async function resolveHTTP2Response<
@@ -46,7 +58,7 @@ export async function resolveHTTP2Response<
 
   if (req.method === 'HEAD') {
     // can be used for lambda warmup
-    unstable_onEnd({}, '');
+    unstable_onEnd(204, {}, '');
     return;
   }
 
@@ -54,11 +66,23 @@ export async function resolveHTTP2Response<
     getInputs: getJsonContentTypeInputs,
   };
 
-  const type = 'query' as const; // TODO: map to request methods
-
   try {
     if (opts.error) {
       throw opts.error;
+    }
+
+    let type: ProcedureType;
+    if (req.method === 'GET') {
+      type = 'query';
+    } else if (req.method === 'POST') {
+      type = Boolean(req.headers?.['x-trpc-subscribe'])
+        ? 'subscription'
+        : 'mutation';
+    } else {
+      throw new TRPCError({
+        message: `Unexpected request method ${req.method}`,
+        code: 'METHOD_NOT_SUPPORTED',
+      });
     }
 
     const inputs = await contentTypeHandler.getInputs({
@@ -114,16 +138,65 @@ export async function resolveHTTP2Response<
         };
       });
 
-    // TODO: implement proper response init
-    const headers: HTTP2Headers = {
-      'content-type': 'application/json',
-    };
+    const { status, headers } = initResponse({
+      ctx,
+      path,
+      type,
+      responseMeta: opts.responseMeta,
+      result,
+    });
 
     const transformedJSON = transformTRPCResponse(router._def._config, result);
     const body = JSON.stringify(transformedJSON);
-    unstable_onEnd(headers, body);
+    unstable_onEnd(status, headers ?? {}, body);
   } catch (err) {
     // TODO:
-    unstable_onEnd({}, JSON.stringify({ error: err }))
+    unstable_onEnd(400, {}, JSON.stringify({ error: err }));
   }
+}
+
+function initResponse<
+  TRouter extends AnyTRPCRouter,
+  TRequest extends HTTPRequest,
+>(opts: {
+  ctx: inferRouterContext<TRouter> | undefined;
+  path: string | undefined;
+  type: ProcedureType | 'unknown';
+  responseMeta?: HTTPBaseHandlerOptions<TRouter, TRequest>['responseMeta'];
+  result?: TRPCResponse<unknown, inferRouterError<TRouter>> | undefined;
+}): HTTPResponse {
+  const result = opts.result;
+
+  let status = result ? getHTTPStatusCode(result) : 200;
+  const headers: HTTPHeaders = {
+    'Content-Type': 'application/json',
+  };
+
+  const data: TRPCSuccessResponse<unknown>[] = [];
+  const errors: TRPCError[] = [];
+  if (result && 'error' in result) {
+    errors.push(result.error);
+  } else if (result) {
+    data.push(result);
+  }
+
+  const meta =
+    opts.responseMeta?.({
+      ctx: opts.ctx,
+      paths: opts.path ? [opts.path] : [],
+      type: opts.type,
+      data,
+      errors,
+      eagerGeneration: !result,
+    }) ?? {};
+
+  for (const [key, value] of Object.entries(meta.headers ?? {})) {
+    headers[key] = value;
+  }
+
+  if (meta.status) {
+    status = meta.status;
+  }
+
+  return { status, headers };
 }

@@ -1,7 +1,7 @@
 import type { AnyRouter, AnyTRPCRouter } from "../../@trpc/server";
-import type { HTTP2Headers, NodeHTTP2RequestHandlerOptions } from "./types";
+import type { NodeHTTP2RequestHandlerOptions } from "./types";
 import { nodeHTTPJSONContentTypeHandler } from "../node-http/content-type/json";
-import type { HTTPRequest, ResolveHTTPRequestOptionsContextFn } from "../../@trpc/server/http";
+import type { HTTPHeaders, HTTPRequest, ResolveHTTPRequestOptionsContextFn } from "../../@trpc/server/http";
 import { resolveHTTP2Response } from "./resolveHTTP2Response";
 
 export async function nodeHTTP2RequestHandler<TRouter extends AnyTRPCRouter>(opts: NodeHTTP2RequestHandlerOptions<AnyRouter>) {
@@ -46,13 +46,14 @@ export async function nodeHTTP2RequestHandler<TRouter extends AnyTRPCRouter>(opt
         req: opts.req,
       });
     },
-    unstable_onEnd: (headers: HTTP2Headers, body: string) => {
+    unstable_onEnd: (status: number, headers: HTTPHeaders, body: string) => {
       for (const [name, value] of Object.entries(headers)) {
         if (!value) continue;
 
         opts.res.setHeader(name, value);
       }
 
+      opts.res.stream.respond({ ':status': status })
       opts.res.write(body);
       opts.res.end()
     },
