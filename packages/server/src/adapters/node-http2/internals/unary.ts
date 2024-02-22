@@ -1,8 +1,8 @@
 import type {
   inferRouterContext,
   inferRouterError,
-  ProcedureType,
-} from '../../@trpc/server';
+  TRPCProcedureType,
+} from '../../../@trpc/server';
 import {
   callTRPCProcedure,
   getErrorShape,
@@ -10,12 +10,12 @@ import {
   transformTRPCResponse,
   TRPCError,
   type AnyTRPCRouter,
-} from '../../@trpc/server';
+} from '../../../@trpc/server';
 import type {
   HTTPHeaders,
   HTTPResponse,
   TRPCRequestInfo,
-} from '../../@trpc/server/http';
+} from '../../../@trpc/server/http';
 import {
   getHTTPStatusCode,
   getJsonContentTypeInputs,
@@ -23,15 +23,15 @@ import {
   type HTTPBaseHandlerOptions,
   type HTTPRequest,
   type ResolveHTTPRequestOptionsContextFn,
-} from '../../@trpc/server/http';
+} from '../../../@trpc/server/http';
 import type {
   TRPCResponse,
   TRPCSuccessResponse,
-} from '../../@trpc/server/rpc';
+} from '../../../@trpc/server/rpc';
 
 type Maybe<TType> = TType | null | undefined;
 
-interface ResolveHTTP2RequestOptions<
+interface ResolveHTTP2UnaryRequestOptions<
   TRouter extends AnyTRPCRouter,
   TRequest extends HTTPRequest,
 > extends HTTPBaseHandlerOptions<TRouter, TRequest> {
@@ -50,10 +50,10 @@ interface ResolveHTTP2RequestOptions<
   unstable_onEnd: (status: number, headers: HTTPHeaders, body: string) => any;
 }
 
-export async function resolveHTTP2Response<
+export async function resolveHTTP2UnaryRequest<
   TRouter extends AnyTRPCRouter,
   TRequest extends HTTPRequest,
->(opts: ResolveHTTP2RequestOptions<TRouter, TRequest>): Promise<void> {
+>(opts: ResolveHTTP2UnaryRequestOptions<TRouter, TRequest>): Promise<void> {
   const { router, req, path, unstable_onEnd, createContext } = opts;
 
   if (req.method === 'HEAD') {
@@ -71,13 +71,11 @@ export async function resolveHTTP2Response<
       throw opts.error;
     }
 
-    let type: ProcedureType;
+    let type: TRPCProcedureType;
     if (req.method === 'GET') {
       type = 'query';
     } else if (req.method === 'POST') {
-      type = Boolean(req.headers?.['x-trpc-subscribe'])
-        ? 'subscription'
-        : 'mutation';
+      type = "mutation"
     } else {
       throw new TRPCError({
         message: `Unexpected request method ${req.method}`,
@@ -161,7 +159,7 @@ function initResponse<
 >(opts: {
   ctx: inferRouterContext<TRouter> | undefined;
   path: string | undefined;
-  type: ProcedureType | 'unknown';
+  type: TRPCProcedureType | 'unknown';
   responseMeta?: HTTPBaseHandlerOptions<TRouter, TRequest>['responseMeta'];
   result?: TRPCResponse<unknown, inferRouterError<TRouter>> | undefined;
 }): HTTPResponse {

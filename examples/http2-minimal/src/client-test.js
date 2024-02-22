@@ -4,7 +4,7 @@ const client = http2.connect('http://localhost:3000');
 client.on('error', (err) => console.error(err));
 
 const req = client.request({
-  ':path': '/testMut',
+  ':path': '/testSub',
   ':method': 'POST',
 });
 

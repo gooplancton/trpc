@@ -9,7 +9,7 @@
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import http from 'http';
-import http2 from "http2";
+import http2 from 'http2';
 // @trpc/server
 import type { AnyRouter, AnyTRPCRouter } from '../@trpc/server';
 import { toURL } from '../@trpc/server/http';
@@ -17,10 +17,9 @@ import type {
   NodeHTTPCreateContextFnOptions,
   NodeHTTPHandlerOptions,
 } from './node-http';
-import type { NodeHTTP2HandlerOptions } from './node-http2';
 import { nodeHTTPRequestHandler } from './node-http';
+import type { NodeHTTP2HandlerOptions } from './node-http2';
 import { nodeHTTP2RequestHandler } from './node-http2';
-
 
 export type CreateHTTPHandlerOptions<TRouter extends AnyRouter> =
   NodeHTTPHandlerOptions<TRouter, http.IncomingMessage, http.ServerResponse>;
@@ -59,24 +58,27 @@ export function createHTTPServer<TRouter extends AnyRouter>(
 }
 
 export function createHTTP2Handler<TRouter extends AnyTRPCRouter>(
-  opts: NodeHTTP2HandlerOptions<TRouter>
+  opts: NodeHTTP2HandlerOptions<TRouter>,
 ) {
-  return async (req: http2.Http2ServerRequest, res: http2.Http2ServerResponse) => {
+  return async (
+    req: http2.Http2ServerRequest,
+    res: http2.Http2ServerResponse,
+  ) => {
     const url = toURL(req.url);
     const path = url.pathname.slice(1);
 
     await nodeHTTP2RequestHandler({
       // FIXME: no typecasting should be needed here
-      ...opts as any,
+      ...(opts as any),
       req,
       res,
-      path
+      path,
     });
-  }
+  };
 }
 
 export function createHTTP2Server<TRouter extends AnyTRPCRouter>(
-  opts: NodeHTTP2HandlerOptions<TRouter>
+  opts: NodeHTTP2HandlerOptions<TRouter>,
 ) {
   const handler = createHTTP2Handler(opts);
 
